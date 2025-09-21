@@ -1,25 +1,55 @@
 import { RealtimeAgent, RealtimeSession } from '@openai/agents/realtime';
 
-export function setupCounter(element: HTMLButtonElement) {
+export function setupCounter(element: HTMLButtonElement, stopButton?: HTMLButtonElement) {
   element.innerHTML = 'Start Realtime Session';
-  element.addEventListener('click', async () => {
+  let session: RealtimeSession | null = null;
+
+  async function fetchEphemeralKey(): Promise<string> {
+    const res = await fetch('/api/get-realtime-key');
+    if (!res.ok) throw new Error('Failed to fetch ephemeral key');
+    const data = await res.json();
+    if (!data.key) throw new Error('No key returned');
+    return data.key;
+  }
+
+  async function connectWithFreshKey() {
     const agent = new RealtimeAgent({
       name: 'Assistant',
       instructions: 'You are a helpful English assistant.',
     });
-    const session = new RealtimeSession(agent);
-    // Automatically connects your microphone and audio output in the browser via WebRTC.
+    session = new RealtimeSession(agent);
     try {
-      await session.connect({
-        // To get this ephemeral key string, you can run the following command or implement the equivalent on the server side:
-        // curl -s -X POST https://api.openai.com/v1/realtime/client_secrets -H "Authorization: Bearer $OPENAI_API_KEY" -H "Content-Type: application/json" -d '{"session": {"type": "realtime", "model": "gpt-realtime"}}' | jq .value
-        apiKey: import.meta.env.VITE_EKEY, // Use your own key here
-      });
+      const apiKey = await fetchEphemeralKey();
+      await session.connect({ apiKey });
       console.log('You are connected!');
       element.innerHTML = 'Connected!';
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
       element.innerHTML = 'Connection Failed';
+      // If error is due to key expiry, try again
+      if (e?.message?.includes('expired') || e?.message?.includes('401')) {
+        try {
+          const apiKey = await fetchEphemeralKey();
+          await session.connect({ apiKey });
+          console.log('You are connected (after refresh)!');
+          element.innerHTML = 'Connected!';
+        } catch (err) {
+          console.error('Retry failed:', err);
+        }
+      }
     }
-  });
+  }
+
+  element.addEventListener('click', connectWithFreshKey);
+
+  if (stopButton) {
+    stopButton.addEventListener('click', () => {
+      if (session) {
+        session.close();
+        console.log('Session stopped.');
+        element.innerHTML = 'Start Realtime Session';
+        session = null;
+      }
+    });
+  }
 }

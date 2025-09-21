@@ -14,6 +14,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
     <h1>Realtime Chat App</h1>
     <div class="card">
       <button id="counter" type="button"></button>
+      <button id="stop-session" type="button">Stop</button>
     </div>
     <p class="read-the-docs">
       Click on the Vite and TypeScript logos to learn more
@@ -21,4 +22,6 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   </div>
 `
 
-setupCounter(document.querySelector<HTMLButtonElement>('#counter')!)
+const counterButton = document.querySelector<HTMLButtonElement>('#counter')!
+const stopButton = document.querySelector<HTMLButtonElement>('#stop-session')!
+setupCounter(counterButton, stopButton)
