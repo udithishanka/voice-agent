@@ -1,8 +1,9 @@
 import { RealtimeAgent, RealtimeSession } from '@openai/agents/realtime';
 
 export function setupCounter(element: HTMLButtonElement, stopButton?: HTMLButtonElement) {
-  element.innerHTML = 'Start Realtime Session';
+  element.innerHTML = '<i class="fas fa-play"></i> Start Session';
   let session: RealtimeSession | null = null;
+  const statusEl = document.getElementById('status') as HTMLElement;
 
   async function fetchEphemeralKey(): Promise<string> {
     const res = await fetch('/api/get-realtime-key');
@@ -13,6 +14,8 @@ export function setupCounter(element: HTMLButtonElement, stopButton?: HTMLButton
   }
 
   async function connectWithFreshKey() {
+    statusEl.textContent = 'Connecting...';
+    statusEl.className = 'status connecting';
     const agent = new RealtimeAgent({
       name: 'Assistant',
       instructions: 'You are a helpful English assistant.',
@@ -22,17 +25,23 @@ export function setupCounter(element: HTMLButtonElement, stopButton?: HTMLButton
       const apiKey = await fetchEphemeralKey();
       await session.connect({ apiKey });
       console.log('You are connected!');
-      element.innerHTML = 'Connected!';
+      element.innerHTML = '<i class="fas fa-pause"></i> Connected';
+      statusEl.textContent = 'Connected';
+      statusEl.className = 'status connected';
     } catch (e: any) {
       console.error(e);
-      element.innerHTML = 'Connection Failed';
+      element.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Connection Failed';
+      statusEl.textContent = 'Connection Failed';
+      statusEl.className = 'status error';
       // If error is due to key expiry, try again
       if (e?.message?.includes('expired') || e?.message?.includes('401')) {
         try {
           const apiKey = await fetchEphemeralKey();
           await session.connect({ apiKey });
           console.log('You are connected (after refresh)!');
-          element.innerHTML = 'Connected!';
+          element.innerHTML = '<i class="fas fa-pause"></i> Connected';
+          statusEl.textContent = 'Connected';
+          statusEl.className = 'status connected';
         } catch (err) {
           console.error('Retry failed:', err);
         }
@@ -47,7 +56,9 @@ export function setupCounter(element: HTMLButtonElement, stopButton?: HTMLButton
       if (session) {
         session.close();
         console.log('Session stopped.');
-        element.innerHTML = 'Start Realtime Session';
+        element.innerHTML = '<i class="fas fa-play"></i> Start Session';
+        statusEl.textContent = 'Disconnected';
+        statusEl.className = 'status';
         session = null;
       }
     });

@@ -1,24 +1,16 @@
 import './style.css'
-import typescriptLogo from './typescript.svg'
-import viteLogo from '/vite.svg'
 import { setupCounter } from './counter.ts'
 
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <div>
-    <a href="https://vite.dev" target="_blank">
-      <img src="${viteLogo}" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://www.typescriptlang.org/" target="_blank">
-      <img src="${typescriptLogo}" class="logo vanilla" alt="TypeScript logo" />
-    </a>
-    <h1>Realtime Chat App</h1>
+    <h1><i class="fas fa-microphone"></i> Realtime Chat App</h1>
     <div class="card">
-      <button id="counter" type="button"></button>
-      <button id="stop-session" type="button">Stop</button>
+      <div id="status" class="status">Disconnected</div>
+      <div class="button-group">
+        <button id="counter" type="button"><i class="fas fa-play"></i> Start Session</button>
+        <button id="stop-session" type="button"><i class="fas fa-stop"></i> Stop</button>
+      </div>
     </div>
-    <p class="read-the-docs">
-      Click on the Vite and TypeScript logos to learn more
-    </p>
   </div>
 `
 
